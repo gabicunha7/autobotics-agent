@@ -1,64 +1,78 @@
-import getpass
-import time
-from datetime import datetime
 import psutil
-import pandas as pd
+import getpass
+import platform
+import time
+import csv
+# import requests
+from datetime import datetime
 
-# Inicializa o dicionário de dados
-dados = {
-    "user": [],
-    "timestamp": [],
-    "cpu percent total": [],
-}
+ARQUIVO = "dados_gerais.csv"
+ARQUIVO2 = "dados_hardware.csv"
 
-# Detecta o número de núcleos e prepara colunas para cada núcleo
-num_nucleos = psutil.cpu_count(logical=True)
-for i in range(num_nucleos):
-    nome_coluna = f"cpu percent core {i + 1}" # "+1" pra contagem não começar do zero
-    dados[nome_coluna] = []
+# Cria arquivo com cabeçalho dos dados gerais do servidor (só na primeira vez)
+try:
+    with open(ARQUIVO, "x", newline="") as f:
+        writer = csv.writer(f, delimiter="|")
+        writer.writerow(["nomeMaquina", "nomeUsuario", "nomeDoSO", "RealeaseDoSO", "VersãoDoSO", "Processador", "NúcleosFísicos", "NúcleosLógicos"])
+except FileExistsError:
+    pass
 
-# Adicionando colunas de RAM
-dados["ram total GB"] = []
-dados["ram usada GB"] = []
-dados["ram percent"] = []
+# Cria arquivo com cabeçalho dos dados do hardware
+try:
+    with open(ARQUIVO2, "x", newline="") as f:
+        writer = csv.writer(f, delimiter="|")
+        writer.writerow(["timestamp", "nomeMaquina", "nomeUsuario", "cpu", "ramTotal", "ramUsada", "discoTotal", "discoUsado"])
+except FileExistsError:
+    pass
 
-# Adicionando colunas de Disco
-dados["disk total GB"] = []
-dados["disk usado GB"] = []
-dados["disk percent"] = []
+# Informações do SO
+nomeSo = platform.system()
+realeaseSo = platform.release()
+versaoSO = platform.version()
+processador = platform.processor()
+nucleosFisicos = psutil.cpu_count(logical=False)
+nucleosLogicos = psutil.cpu_count(logical=True)
+nomeMaquina = platform.node()
+nomeUsuario = getpass.getuser()
 
-# Criando laço de repetição
-rodando = True
+with open(ARQUIVO, "a", newline="") as f:
+    writer = csv.writer(f, delimiter="|")
+    writer.writerow([nomeMaquina, nomeUsuario, nomeSo, realeaseSo, versaoSO, processador, nucleosFisicos, nucleosLogicos])
 
-while rodando:
-    # Usuário e timestamp
-    dados["user"].append(getpass.getuser())
-    dados["timestamp"].append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+# Cria a função para enviar mensagem no canal de suporte usando o InfoMan
+# def enviar_mensagem_slack(menssagem):
+#     textoEnviado = {'text': menssagem}
+#     requests.post(SLACK_WEBHOOK_URL, json=textoEnviado)
 
-    # CPU total
-    dados["cpu percent total"].append(psutil.cpu_percent(interval=1, percpu=False))
+print("\n")
+print("\n=== Iniciando Captura Contínua ===")
 
-    # CPU por núcleo
-    cpu_por_nucleo = psutil.cpu_percent(interval=None, percpu=True)
-    for i in range(num_nucleos):
-        nome_coluna = f"cpu percent core {i + 1}"
-        dados[nome_coluna].append(cpu_por_nucleo[i])
+try:
+    while True:
+        uso = psutil.cpu_percent(interval=1)
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ramTotal = round(psutil.virtual_memory().total / (1024**3), 2)
+        ramUsada = psutil.virtual_memory().percent
+        discoTotal = round(psutil.disk_usage("/").total / (1024**3), 2)
+        discoUsado = psutil.disk_usage("/").percent
+        
+        print(f"{timestamp} | Nome da Máquina: {nomeMaquina} | Nome de usuário: {nomeUsuario} | CPU: {uso}% | Ram total: {ramTotal}GB | Ram em Uso: {ramUsada}% | Disco total: {discoTotal}GB | Disco em uso: {discoUsado}%")
+        
+        # if uso > 95:
+        #     enviar_mensagem_slack(f":warning: ALERTA NA MÁQUINA: {nomeMaquina} Uso de CPU acima de 50%! Atual: {uso}%")
+        #     print("\n Notificação enviada no Slack - #alertas \n")
+        # elif ramUsada > 90:
+        #     enviar_mensagem_slack(f":warning: ALERTA NA MÁQUINA: {nomeMaquina} Uso de RAM acima de 70%! Atual: {ramUsada}%")
+        #     print("\n Notificação enviada no Slack - #alertas \n")
+        # elif discoUsado > 97:
+        #     enviar_mensagem_slack(f":warning: ALERTA NA MÁQUINA: {nomeMaquina} Uso de disco acima de 97%! Atual: {discoUsado}%")
+        #     print("\n Notificação enviada no Slack - #alertas \n")
+        
+        with open(ARQUIVO2, "a", newline="") as f:
+            writer = csv.writer(f, delimiter="|")
+            writer.writerow([timestamp, nomeMaquina, nomeUsuario, uso, ramTotal, ramUsada, discoTotal, discoUsado])
+        
+        time.sleep(10)
 
-    # RAM
-    mem = psutil.virtual_memory()
-    dados["ram total GB"].append(round(mem.total / (1024**3), 2))
-    dados["ram usada GB"].append(round(mem.used / (1024**3), 2))
-    dados["ram percent"].append(mem.percent)
-
-    # Disco (C:)
-    disco = psutil.disk_usage('C:\\')
-    dados["disk total GB"].append(round(disco.total / (1024**3), 2))
-    dados["disk usado GB"].append(round(disco.used / (1024**3), 2))
-    dados["disk percent"].append(disco.percent)
-
-    # Salva em CSV
-    df = pd.DataFrame(dados)
-    df.to_csv("dados-sistema.csv", sep=";", index=False, encoding="utf-8")
-
-    # Espera 5 segundos
-    time.sleep(5)
+except KeyboardInterrupt:  # (Ctrl + c)
+    print("\n=== Captura finalizada ===")
