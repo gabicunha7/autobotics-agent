@@ -13,7 +13,7 @@ ARQUIVO2 = "dados_hardware.csv"
 try:
     with open(ARQUIVO, "x", newline="") as f:
         writer = csv.writer(f, delimiter="|")
-        writer.writerow(["nomeMaquina", "nomeUsuario", "nomeDoSO", "RealeaseDoSO", "VersãoDoSO", "Processador", "NúcleosFísicos", "NúcleosLógicos"])
+        writer.writerow(["nomeMaquina", "nomeUsuario", "nomeDoSO", "RealeaseDoSO", "VersaoDoSO", "Processador", "NucleosFisicos", "NucleosLogicos"])
 except FileExistsError:
     pass
 
@@ -21,7 +21,10 @@ except FileExistsError:
 try:
     with open(ARQUIVO2, "x", newline="") as f:
         writer = csv.writer(f, delimiter="|")
-        writer.writerow(["timestamp", "nomeMaquina", "nomeUsuario", "cpu", "ramTotal", "ramUsada", "discoTotal", "discoUsado"])
+        writer.writerow([
+            "timestamp", "nomeMaquina", "nomeUsuario", "cpu", "ramTotal", "ramUsada",
+            "discoTotal", "discoUsado", "numProcessos", "top5Processos"
+        ])
 except FileExistsError:
     pass
 
@@ -39,11 +42,6 @@ with open(ARQUIVO, "a", newline="") as f:
     writer = csv.writer(f, delimiter="|")
     writer.writerow([nomeMaquina, nomeUsuario, nomeSo, realeaseSo, versaoSO, processador, nucleosFisicos, nucleosLogicos])
 
-# Cria a função para enviar mensagem no canal de suporte usando o InfoMan
-# def enviar_mensagem_slack(menssagem):
-#     textoEnviado = {'text': menssagem}
-#     requests.post(SLACK_WEBHOOK_URL, json=textoEnviado)
-
 print("\n")
 print("\n=== Iniciando Captura Contínua ===")
 
@@ -55,23 +53,35 @@ try:
         ramUsada = psutil.virtual_memory().percent
         discoTotal = round(psutil.disk_usage("/").total / (1024**3), 2)
         discoUsado = psutil.disk_usage("/").percent
-        
-        print(f"{timestamp} | Nome da Máquina: {nomeMaquina} | Nome de usuário: {nomeUsuario} | CPU: {uso}% | Ram total: {ramTotal}GB | Ram em Uso: {ramUsada}% | Disco total: {discoTotal}GB | Disco em uso: {discoUsado}%")
-        
-        # if uso > 95:
-        #     enviar_mensagem_slack(f":warning: ALERTA NA MÁQUINA: {nomeMaquina} Uso de CPU acima de 50%! Atual: {uso}%")
-        #     print("\n Notificação enviada no Slack - #alertas \n")
-        # elif ramUsada > 90:
-        #     enviar_mensagem_slack(f":warning: ALERTA NA MÁQUINA: {nomeMaquina} Uso de RAM acima de 70%! Atual: {ramUsada}%")
-        #     print("\n Notificação enviada no Slack - #alertas \n")
-        # elif discoUsado > 97:
-        #     enviar_mensagem_slack(f":warning: ALERTA NA MÁQUINA: {nomeMaquina} Uso de disco acima de 97%! Atual: {discoUsado}%")
-        #     print("\n Notificação enviada no Slack - #alertas \n")
-        
+
+        # Número de processos
+        numProcessos = len(psutil.pids())
+
+        # Top 5 processos que mais estão usando CPU
+        processos = []
+        for p in psutil.process_iter(['pid', 'name', 'cpu_percent']):
+            try:
+                processos.append(p.info)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+
+        top5 = sorted(processos, key=lambda x: x['cpu_percent'], reverse=True)[:5]
+        top5Processos = "; ".join([f"{p['name']}({p['pid']}):{p['cpu_percent']}%" for p in top5])
+
+        # Print no terminal
+        print(f"{timestamp} | Máquina: {nomeMaquina} | Usuário: {nomeUsuario} | "
+              f"CPU: {uso}% | RAM: {ramUsada}% de {ramTotal}GB | "
+              f"Disco: {discoUsado}% de {discoTotal}GB | "
+              f"Processos: {numProcessos} | Top5: {top5Processos}")
+
+        # Grava no CSV
         with open(ARQUIVO2, "a", newline="") as f:
             writer = csv.writer(f, delimiter="|")
-            writer.writerow([timestamp, nomeMaquina, nomeUsuario, uso, ramTotal, ramUsada, discoTotal, discoUsado])
-        
+            writer.writerow([
+                timestamp, nomeMaquina, nomeUsuario, uso, ramTotal, ramUsada,
+                discoTotal, discoUsado, numProcessos, top5Processos
+            ])
+
         time.sleep(10)
 
 except KeyboardInterrupt:  # (Ctrl + c)
