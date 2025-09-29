@@ -12,7 +12,7 @@ ARQUIVO2 = "dados_hardware.csv"
 # Cria arquivo com cabeçalho dos dados gerais do servidor (só na primeira vez)
 try:
     with open(ARQUIVO, "x", newline="") as f:
-        writer = csv.writer(f, delimiter="|")
+        writer = csv.writer(f, delimiter=";")
         writer.writerow(["nomeMaquina", "nomeUsuario", "nomeDoSO", "RealeaseDoSO", "VersaoDoSO", "Processador", "NucleosFisicos", "NucleosLogicos"])
 except FileExistsError:
     pass
@@ -20,7 +20,7 @@ except FileExistsError:
 # Cria arquivo com cabeçalho dos dados do hardware
 try:
     with open(ARQUIVO2, "x", newline="") as f:
-        writer = csv.writer(f, delimiter="|")
+        writer = csv.writer(f, delimiter=";")
         writer.writerow([
             "timestamp", "nomeMaquina", "nomeUsuario", "cpu", "ramTotal", "ramUsada",
             "discoTotal", "discoUsado", "numProcessos", "top5Processos"
@@ -39,7 +39,7 @@ nomeMaquina = platform.node()
 nomeUsuario = getpass.getuser()
 
 with open(ARQUIVO, "a", newline="") as f:
-    writer = csv.writer(f, delimiter="|")
+    writer = csv.writer(f, delimiter=";")
     writer.writerow([nomeMaquina, nomeUsuario, nomeSo, realeaseSo, versaoSO, processador, nucleosFisicos, nucleosLogicos])
 
 print("\n")
@@ -66,7 +66,7 @@ try:
                 continue
 
         top5 = sorted(processos, key=lambda x: x['cpu_percent'], reverse=True)[:5]
-        top5Processos = "; ".join([f"{p['name']}({p['pid']}):{p['cpu_percent']}%" for p in top5])
+        top5Processos = ",".join([f"{p['name']}({p['pid']}):{p['cpu_percent']}%" for p in top5])
 
         # Print no terminal
         print(f"{timestamp} | Máquina: {nomeMaquina} | Usuário: {nomeUsuario} | "
@@ -76,7 +76,7 @@ try:
 
         # Grava no CSV
         with open(ARQUIVO2, "a", newline="") as f:
-            writer = csv.writer(f, delimiter="|")
+            writer = csv.writer(f, delimiter=";")
             writer.writerow([
                 timestamp, nomeMaquina, nomeUsuario, uso, ramTotal, ramUsada,
                 discoTotal, discoUsado, numProcessos, top5Processos
