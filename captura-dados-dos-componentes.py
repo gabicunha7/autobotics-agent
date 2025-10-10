@@ -10,13 +10,6 @@ import os
 
 load_dotenv(override=True)
 
-print("Diretório atual:", os.getcwd())
-
-print("Variáveis do banco:")
-print("DB_HOST:", os.getenv("DB_HOST"))
-print("DB_USER:", os.getenv("DB_USER"))
-print("DB_PASSWORD:", os.getenv("DB_PASSWORD"))
-print("DB_DATABASE:", os.getenv("DB_DATABASE"))
 
 ARQUIVO = "dados_gerais.csv"
 ARQUIVO2 = "dados_hardware.csv"
@@ -56,19 +49,12 @@ with open(ARQUIVO, "a", newline="") as f:
 
 print("\n=== Iniciando Captura Contínua ===\n")
 
-# config = {
-#     'host': os.getenv("DB_HOST"),
-#     'user': os.getenv("DB_USER"),
-#     'password': os.getenv("DB_PASSWORD"),
-#     'database': os.getenv("DB_DATABASE"),
-# }
-
 config = {
-     'host': 'localhost',
-     'user': 'agente',
-     'password': 'sptech',
-     'database': 'autobotics',
- }
+    'host': os.getenv("DB_HOST"),
+    'user': os.getenv("DB_USER"),
+    'password': os.getenv("DB_PASSWORD"),
+    'database': os.getenv("DB_DATABASE"),
+}
 
 try:
    
@@ -80,7 +66,7 @@ try:
     cursor.execute("SELECT * FROM parametro")
     results = cursor.fetchall()
     if results:
-        print("SELECT executado com sucesso. Resultados encontrados:")
+        print("SELECT na tabela 'parametro' executado com sucesso. Resultados encontrados:")
         for row in results:
             print(row)
     else:
