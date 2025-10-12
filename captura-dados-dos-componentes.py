@@ -25,15 +25,18 @@ except FileExistsError:
     pass
 
 # Cria arquivo com cabeçalho dos dados do hardware (só na primeira vez)
-try:
-    with open(ARQUIVO2, "x", newline="") as f:
-        writer = csv.writer(f, delimiter=";")
-        writer.writerow([
-            "timestamp", "nomeMaquina", "nomeUsuario", "cpu", "ramTotal", "ramUsada",
-            "discoTotal", "discoUsado", "numProcessos", "top5Processos"
-        ])
-except FileExistsError:
-    pass
+def cria_comeco_hw():
+    try:
+        with open(ARQUIVO2, "x", newline="") as f:
+            writer = csv.writer(f, delimiter=";")
+            writer.writerow([
+                "timestamp", "nomeMaquina", "nomeUsuario", "cpu", "ramTotal", "ramUsada",
+                "discoTotal", "discoUsado", "numProcessos", "top5Processos"
+            ])
+    except FileExistsError:
+        pass
+
+cria_comeco_hw()
 
 # Informações do SO e máquina
 nomeSo = platform.system()
@@ -137,6 +140,19 @@ try:
         print("Dados inseridos no banco com sucesso.")
 
         time.sleep(10)  
+
+        if datetime.now().second < 10:
+            try:
+                s3 = boto3.client('s3')
+                nome_bucket = 'raw-1d4a3f130793f4b0dfc576791dd86b34'
+                
+                caminho = f"telemetria/{numSerial}_{timestamp.replace(':', '-')}.csv"
+                s3.upload_file(ARQUIVO2, nome_bucket, caminho)
+                os.remove(ARQUIVO2)
+                cria_comeco_hw()
+
+            except Exception as e:
+                print(f"Erro em enviar csv")
 
 except mysql.connector.Error as err:
     print(f"Erro no banco de dados: {err}")
