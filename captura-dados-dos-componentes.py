@@ -7,18 +7,20 @@ import mysql.connector
 from datetime import datetime
 from dotenv import load_dotenv
 import os
+import boto3
+import json
 
 load_dotenv()
 
-
 ARQUIVO = "dados_gerais.csv"
 ARQUIVO2 = "dados_hardware.csv"
+numSerial = "COD000"
 
 # Cria arquivo com cabeçalho dos dados gerais do servidor (só na primeira vez)
 try:
     with open(ARQUIVO, "x", newline="") as f:
         writer = csv.writer(f, delimiter=";")
-        writer.writerow(["nomeMaquina", "nomeUsuario", "nomeDoSO", "RealeaseDoSO", "VersaoDoSO", "Processador", "NucleosFisicos", "NucleosLogicos"])
+        writer.writerow(["nomeMaquina", "nomeUsuario", "nomeDoSO", "RealeaseDoSO", "VersaoDoSO", "Processador", "NucleosFisicos", "NucleosLogicos", "NumeroSerial"])
 except FileExistsError:
     pass
 
@@ -45,7 +47,7 @@ nomeUsuario = getpass.getuser()
 
 with open(ARQUIVO, "a", newline="") as f:
     writer = csv.writer(f, delimiter=";")
-    writer.writerow([nomeMaquina, nomeUsuario, nomeSo, realeaseSo, versaoSO, processador, nucleosFisicos, nucleosLogicos])
+    writer.writerow([nomeMaquina, nomeUsuario, nomeSo, realeaseSo, versaoSO, processador, nucleosFisicos, nucleosLogicos, numSerial])
 
 print("\n=== Iniciando Captura Contínua ===\n")
 
@@ -80,6 +82,8 @@ try:
         discoTotal = round(psutil.disk_usage("/").total / (1024**3), 2)
         discoUsado = psutil.disk_usage("/").percent
         numProcessos = len(psutil.pids())
+        nomeMaquina = platform.node()
+        nomeUsuario = getpass.getuser()
 
         processos = []
         for p in psutil.process_iter(['pid', 'name', 'cpu_percent']):
@@ -88,33 +92,44 @@ try:
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
         top5 = sorted(processos, key=lambda x: x['cpu_percent'], reverse=True)[:5]
-        top5Processos = ",".join([f"{p['name']}({p['pid']}):{p['cpu_percent']}%" for p in top5])
+        top5_json = json.dumps(top5)
+
 
         print(f"{timestamp} | Máquina: {nomeMaquina} | Usuário: {nomeUsuario} | "
               f"CPU: {uso}% | RAM: {ramUsada}% de {ramTotal}GB | "
               f"Disco: {discoUsado}% de {discoTotal}GB | "
-              f"Processos: {numProcessos} | Top5: {top5Processos}")
+              f"Processos: {numProcessos} | Top5: {top5_json}")
 
         # Grava no CSV
         with open(ARQUIVO2, "a", newline="") as f:
             writer = csv.writer(f, delimiter=";")
             writer.writerow([
                 timestamp, nomeMaquina, nomeUsuario, uso, ramTotal, ramUsada,
-                discoTotal, discoUsado, numProcessos, top5Processos
+                discoTotal, discoUsado, numProcessos, top5_json
             ])
 
+        cursor.execute("SELECT id_controlador FROM controlador WHERE numero_serial = %s", (numSerial,))
+        id_controlador = cursor.fetchone()[0]
+
         query_insert = """
-            INSERT INTO dados_hardware (
-                timestamp, nome_maquina, nome_usuario, cpu_percent,
-                ram_total_gb, ram_usada_percent, disco_total_gb, disco_usado_percent,
-                num_processos, top5_processos
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            update telemetria 
+            set timestamp = %s,
+                nome_maquina = %s,
+                nome_usuario = %s,
+                cpu_percent = %s,
+                ram_total_gb = %s,
+                ram_usada_percent = %s,
+                disco_total_gb = %s,
+                disco_usado_percent = %s,
+                num_processos = %s,
+                top5_processos = %s
+            WHERE fk_controlador = %s
         """
 
         valores = (
             timestamp, nomeMaquina, nomeUsuario, uso,
             ramTotal, ramUsada, discoTotal, discoUsado,
-            numProcessos, top5Processos
+            numProcessos, top5_json, id_controlador
         )
 
         cursor.execute(query_insert, valores)
