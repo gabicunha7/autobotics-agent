@@ -1,5 +1,4 @@
 import psutil
-import getpass
 import platform
 import time
 import csv
@@ -165,3 +164,4 @@ finally:
         cursor.close()
         conn.close()
         print("Conexão com o banco encerrada.")
+
