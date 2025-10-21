@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import os
 import boto3
 import json
+import getpass
 
 load_dotenv()
 
@@ -164,4 +165,5 @@ finally:
         cursor.close()
         conn.close()
         print("Conexão com o banco encerrada.")
+
 
