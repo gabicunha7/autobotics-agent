@@ -3,3 +3,4 @@ mysql-connector-python
 datetime
 dotenv
 boto3
+getpass4
