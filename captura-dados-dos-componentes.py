@@ -80,9 +80,9 @@ try:
     while True:
         uso = psutil.cpu_percent(interval=1)
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ramTotal = round(psutil.virtual_memory().total / (1024**3), 2)
+        ramTotal = psutil.virtual_memory().total
         ramUsada = psutil.virtual_memory().percent
-        discoTotal = round(psutil.disk_usage("/").total / (1024**3), 2)
+        discoTotal = psutil.disk_usage("/").total
         discoUsado = psutil.disk_usage("/").percent
         numProcessos = len(psutil.pids())
         nomeMaquina = platform.node()
@@ -99,8 +99,8 @@ try:
 
 
         print(f"{timestamp} | Máquina: {nomeMaquina} | Usuário: {nomeUsuario} | "
-              f"CPU: {uso}% | RAM: {ramUsada}% de {ramTotal}GB | "
-              f"Disco: {discoUsado}% de {discoTotal}GB | "
+              f"CPU: {uso}% | RAM: {ramUsada}% de {ramTotal}B | "
+              f"Disco: {discoUsado}% de {discoTotal}B | "
               f"Processos: {numProcessos} | Top5: {top5_json}")
 
         # Grava no CSV
@@ -165,5 +165,6 @@ finally:
         cursor.close()
         conn.close()
         print("Conexão com o banco encerrada.")
+
 
 
