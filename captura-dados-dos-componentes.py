@@ -131,7 +131,7 @@ try:
 
         valores = (
             timestamp, nomeMaquina, nomeUsuario, uso,
-            ramTotal, ramUsada, discoTotal, discoUsado,
+            round(ramTotal / (1024 ** 3), 2), ramUsada, round(discoTotal / (1024 ** 3),2), discoUsado,
             numProcessos, top5_json, id_controlador
         )
 
@@ -165,6 +165,7 @@ finally:
         cursor.close()
         conn.close()
         print("Conexão com o banco encerrada.")
+
 
 
 
