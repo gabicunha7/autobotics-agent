@@ -144,9 +144,9 @@ try:
         if datetime.now().second < 10:
             try:
                 s3 = boto3.client('s3')
-                nome_bucket = 'raw-1d4a3f130793f4b0dfc576791dd86b34'
+                nome_bucket = 'java-etl-raw-sptech'
                 
-                caminho = f"telemetria/{numSerial}-{(timestamp.replace(':', '-')).replace(' ', '-')}.csv"
+                caminho = f"{numSerial}-{(timestamp.replace(':', '-')).replace(' ', '-')}.csv"
                 s3.upload_file(ARQUIVO2, nome_bucket, caminho)
                 print("Dados CSV enviado para o buckete com sucesso!")
                 os.remove(ARQUIVO2)
