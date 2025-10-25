@@ -30,7 +30,7 @@ def cria_comeco_hw():
         with open(ARQUIVO2, "x", newline="") as f:
             writer = csv.writer(f, delimiter=";")
             writer.writerow([
-                "timestamp", "nomeMaquina", "nomeUsuario", "cpu", "ramTotal", "ramUsada",
+                "timestamp", "numSerial", "cpu", "ramTotal", "ramUsada",
                 "discoTotal", "discoUsado", "numProcessos", "top5Processos"
             ])
     except FileExistsError:
@@ -72,8 +72,8 @@ try:
     results = cursor.fetchall()
     if results:
         print("SELECT na tabela 'parametro' executado com sucesso. Resultados encontrados:")
-        for row in results:
-            print(row)
+        # for row in results:
+        #     print(row)
     else:
         print("SELECT executado com sucesso, mas não retornou resultados.")
 
@@ -101,14 +101,14 @@ try:
         print(f"{timestamp} | Máquina: {nomeMaquina} | Usuário: {nomeUsuario} | "
               f"CPU: {uso}% | RAM: {ramUsada}% de {ramTotal}B | "
               f"Disco: {discoUsado}% de {discoTotal}B | "
-              f"Processos: {numProcessos} | Top5: {top5_json}")
+              f"Processos: {numProcessos} | Top5: {json.loads(top5_json)}")
 
         # Grava no CSV
         with open(ARQUIVO2, "a", newline="") as f:
             writer = csv.writer(f, delimiter=";")
             writer.writerow([
-                timestamp, nomeMaquina, nomeUsuario, uso, ramTotal, ramUsada,
-                discoTotal, discoUsado, numProcessos, top5_json
+                 timestamp, numSerial, uso, ramTotal, ramUsada,
+                discoTotal, discoUsado, numProcessos, json.loads(top5_json)
             ])
 
         cursor.execute("SELECT id_controlador FROM controlador WHERE numero_serial = %s", (numSerial,))
@@ -146,8 +146,9 @@ try:
                 s3 = boto3.client('s3')
                 nome_bucket = 'raw-1d4a3f130793f4b0dfc576791dd86b34'
                 
-                caminho = f"telemetria/{numSerial}_{timestamp.replace(':', '-')}.csv"
+                caminho = f"telemetria/{numSerial}-{(timestamp.replace(':', '-')).replace(' ', '-')}.csv"
                 s3.upload_file(ARQUIVO2, nome_bucket, caminho)
+                print("Dados CSV enviado para o buckete com sucesso!")
                 os.remove(ARQUIVO2)
                 cria_comeco_hw()
 
