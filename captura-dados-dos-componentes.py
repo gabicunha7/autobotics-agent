@@ -16,7 +16,6 @@ ARQUIVO = "dados_gerais.csv"
 ARQUIVO2 = "dados_hardware.csv"
 numSerial = "COD000"
 
-# Cria arquivo com cabeçalho dos dados gerais do servidor (só na primeira vez)
 try:
     with open(ARQUIVO, "x", newline="") as f:
         writer = csv.writer(f, delimiter=";")
@@ -24,7 +23,6 @@ try:
 except FileExistsError:
     pass
 
-# Cria arquivo com cabeçalho dos dados do hardware (só na primeira vez)
 def cria_comeco_hw():
     try:
         with open(ARQUIVO2, "x", newline="") as f:
@@ -38,7 +36,6 @@ def cria_comeco_hw():
 
 cria_comeco_hw()
 
-# Informações do SO e máquina
 nomeSo = platform.system()
 realeaseSo = platform.release()
 versaoSO = platform.version()
@@ -72,8 +69,7 @@ try:
     results = cursor.fetchall()
     if results:
         print("SELECT na tabela 'parametro' executado com sucesso. Resultados encontrados:")
-        # for row in results:
-        #     print(row)
+
     else:
         print("SELECT executado com sucesso, mas não retornou resultados.")
 
@@ -89,13 +85,16 @@ try:
         nomeUsuario = getpass.getuser()
 
         processos = []
-        for p in psutil.process_iter(['pid', 'name', 'cpu_percent']):
+        for p in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_info']):
             try:
+                rss_b = p.info['memory_info'].rss
+                p.info['memory_rss'] = rss_b
+                del p.info['memory_info']
                 processos.append(p.info)
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
         top5 = sorted(processos, key=lambda x: x['cpu_percent'], reverse=True)[:5]
-        top5_json = json.dumps(top5)
+        top5_json = json.dumps(top5, indent=2)
 
 
         print(f"{timestamp} | Máquina: {nomeMaquina} | Usuário: {nomeUsuario} | "
@@ -103,7 +102,6 @@ try:
               f"Disco: {discoUsado}% de {discoTotal}B | "
               f"Processos: {numProcessos} | Top5: {json.loads(top5_json)}")
 
-        # Grava no CSV
         with open(ARQUIVO2, "a", newline="") as f:
             writer = csv.writer(f, delimiter=";")
             writer.writerow([
@@ -148,7 +146,7 @@ try:
                 
                 caminho = f"{numSerial}-{(timestamp.replace(':', '-')).replace(' ', '-')}.csv"
                 s3.upload_file(ARQUIVO2, nome_bucket, caminho)
-                print("Dados CSV enviado para o buckete com sucesso!")
+                print("Dados CSV enviado para o bucket com sucesso!")
                 os.remove(ARQUIVO2)
                 cria_comeco_hw()
 
