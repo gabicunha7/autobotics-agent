@@ -14,7 +14,7 @@ load_dotenv()
 
 ARQUIVO = "dados_gerais.csv"
 ARQUIVO2 = "dados_hardware.csv"
-numSerial = "COD000"
+numSerial = "0001"
 
 try:
     with open(ARQUIVO, "x", newline="") as f:
@@ -142,7 +142,7 @@ try:
         if datetime.now().second < 10:
             try:
                 s3 = boto3.client('s3')
-                nome_bucket = 'java-etl-raw-sptech'
+                nome_bucket = 'raw-1d4a3f130793f4b0dfc576791dd86b32'
                 
                 caminho = f"{numSerial}-{(timestamp.replace(':', '-')).replace(' ', '-')}.csv"
                 s3.upload_file(ARQUIVO2, nome_bucket, caminho)
