@@ -74,10 +74,9 @@ def atualizar_disco(serial, dias_passados):
 with open(ARQUIVO, "w", newline="") as f:
     writer = csv.writer(f, delimiter=";")
     writer.writerow([
-        "timestamp", "cpu", "ramTotal", "ramUsada", "discoTotal", "discoUsado", 
-        "numProcessos", "codigoMaquina", "empresa", "setor", "top5Processos"
+        "timestamp", "numSerial", "cpu", "ramTotal", "ramUsada", "discoTotal", "discoUsado", 
+        "numProcessos", "top5Processos"
     ])
-
 
 ano_atual = datetime.now().year
 
@@ -133,15 +132,13 @@ with open(ARQUIVO, "a", newline="") as f:
 
             writer.writerow([
                 tempo.strftime("%Y-%m-%d %H:%M:%S"),
+                serial,
                 cpu,
                 ram_total,
                 ram_usada,
                 disco_total,
                 disco_usado,
                 num_processos,
-                serial,
-                empresa,
-                setor,
                 json.loads(json.dumps(top5))
             ])
 
@@ -168,15 +165,13 @@ with open(ARQUIVO, "a", newline="") as f:
 
             writer.writerow([
                 tempo.strftime("%Y-%m-%d %H:%M:%S"),
+                serial,
                 cpu,
                 ram_total,
                 ram_usada,
                 disco_total,
                 disco_usado,
                 num_processos,
-                serial,
-                empresa,
-                setor,
                 json.loads(json.dumps(top5))
             ])
 
