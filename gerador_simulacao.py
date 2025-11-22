@@ -75,7 +75,7 @@ with open(ARQUIVO, "w", newline="") as f:
     writer = csv.writer(f, delimiter=";")
     writer.writerow([
         "timestamp", "cpu", "ramTotal", "ramUsada", "discoTotal", "discoUsado", 
-        "numProcessos", "codigoMaquina", "empresa" "setor", "top5Processos"
+        "numProcessos", "codigoMaquina", "empresa", "setor", "top5Processos"
     ])
 
 
