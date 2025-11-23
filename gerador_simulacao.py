@@ -145,7 +145,7 @@ with open(ARQUIVO, "a", newline="") as f:
         tempo += incremento_horas
 
     tempo = inicio_dia2
-    incremento_minutos = timedelta(minutes=1)
+    incremento_minutos = timedelta(minutes=5)
 
     while tempo <= fim_dia2:
 
