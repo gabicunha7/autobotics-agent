@@ -94,7 +94,7 @@ def gerar_top5():
             "pid": random.randint(100, 9999),
             "name": random.choice(NOME_PROCESSOS),
             "cpu_percent": round(random.uniform(0, 40), 2),
-            "memory_rss": random.randint(50_000_000, 500_000_000)
+            "memory_rss": round(random.uniform(0, 40), 2),
         })
     return lista
 
@@ -119,9 +119,9 @@ with open(ARQUIVO, "a", newline="") as f:
 
             setor = SETOR_POR_SERIAL[serial]  
             cpu = round(random.uniform(1, 95), 2)
-            ram_total = 8 * (1024 ** 3)
+            ram_total = 16.00
             ram_usada = round(random.uniform(20, 95), 2)
-            disco_total = 250 * (1024 ** 3)
+            disco_total = 512.00
             empresa = "Porsche"
 
   
@@ -132,6 +132,8 @@ with open(ARQUIVO, "a", newline="") as f:
 
             writer.writerow([
                 tempo.strftime("%Y-%m-%d %H:%M:%S"),
+                empresa,
+                setor,
                 serial,
                 cpu,
                 ram_total,
@@ -153,9 +155,9 @@ with open(ARQUIVO, "a", newline="") as f:
 
             setor = SETOR_POR_SERIAL[serial] 
             cpu = round(random.uniform(1, 95), 2)
-            ram_total = 8 * (1024 ** 3)
+            ram_total = 16.00
             ram_usada = round(random.uniform(20, 95), 2)
-            disco_total = 250 * (1024 ** 3)
+            disco_total = 512.00
             empresa = "Porsche"
 
             disco_usado = atualizar_disco(serial, dias_passados)
@@ -165,6 +167,8 @@ with open(ARQUIVO, "a", newline="") as f:
 
             writer.writerow([
                 tempo.strftime("%Y-%m-%d %H:%M:%S"),
+                empresa,
+                setor,
                 serial,
                 cpu,
                 ram_total,
