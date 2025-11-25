@@ -74,7 +74,7 @@ def atualizar_disco(serial, dias_passados):
 with open(ARQUIVO, "w", newline="") as f:
     writer = csv.writer(f, delimiter=";")
     writer.writerow([
-        "timestamp", "numSerial", "cpu", "ramTotal", "ramUsada", "discoTotal", "discoUsado", 
+        "timestamp", "empresa", "setor", "numSerial", "cpu", "ramTotal", "ramUsada", "discoTotal", "discoUsado", 
         "numProcessos", "top5Processos"
     ])
 
