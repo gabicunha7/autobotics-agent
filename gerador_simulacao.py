@@ -45,24 +45,30 @@ NOME_PROCESSOS = [
 ]
 
 disco_usado_atual = {serial: random.uniform(20, 40) for serial in NUM_SERIAIS}
+dias_restantes_para_aumento = {
+    serial: random.randint(90, 150) for serial in NUM_SERIAIS
+}
+
 
 
 dias_passados = 0
 
 
 def atualizar_disco(serial, dias_passados):
-    """Atualiza lentamente o uso de disco com comportamento realista."""
 
     valor = disco_usado_atual[serial]
 
+    dias_restantes_para_aumento[serial] -= 1
 
-    valor += random.uniform(0.3, 0.5)
+    if dias_restantes_para_aumento[serial] <= 0:
+        valor += random.uniform(21.0, 33.0)
 
-    if dias_passados % 14 == 0 and dias_passados != 0:
-        valor += random.uniform(5.0, 10.5)
+        dias_restantes_para_aumento[serial] = random.randint(90, 150)
 
     if valor > 95:
-        valor -= random.uniform(50.5, 70.0)
+        valor -= random.uniform(50.0, 70.0)
+
+        dias_restantes_para_aumento[serial] = random.randint(90, 150)
 
     valor = max(5.0, min(95.0, valor))
 
