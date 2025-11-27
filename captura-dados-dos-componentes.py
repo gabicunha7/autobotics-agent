@@ -85,14 +85,29 @@ try:
         nomeUsuario = getpass.getuser()
 
         processos = []
+        ram_total = psutil.virtual_memory().total
+
         for p in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_info']):
             try:
-                rss_b = p.info['memory_info'].rss
-                p.info['memory_rss'] = rss_b
-                del p.info['memory_info']
-                processos.append(p.info)
+                rss_bytes = p.info['memory_info'].rss
+        
+               # RAM em percentual
+                mem_percent = round((rss_bytes / ram_total) * 100, 2)
+
+               # CPU normalizado
+                cpu_raw = p.cpu_percent(interval=0.1)
+                cpu_percent_real = round(cpu_raw / psutil.cpu_count(), 2)
+
+                processos.append({
+                    "pid": p.pid,
+                    "name": p.info['name'],
+                    "cpu_percent": cpu_percent_real,
+                    "memory_percent": mem_percent
+                })
+
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
+
         top5 = sorted(processos, key=lambda x: x['cpu_percent'], reverse=True)[:5]
         top5_json = json.dumps(top5, indent=2)
 
